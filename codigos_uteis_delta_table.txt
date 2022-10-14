@@ -1,0 +1,51 @@
+spark.sql('''
+CREATE DATABASE IF NOT EXISTS app_billing  COMMENT 'Database reponsável por manter processos relacionados ao faturmanerto legado' LOCATION 's3://datalake-dock/app/billing/'
+''')
+
+spark.sql('''
+CREATE TABLE app_billing.bt_type_transaction_categorized_history
+(
+    id_emissor string,
+    nome_emissor string,
+    id_tipo_transacao string,
+    nome_transacao string,
+    flag_credito string,
+    categoria string,
+    flag_extrato string,
+    flag_estorno string,
+    flag_transitoria string,
+    conta_transitoria string,
+    flag_servico_dock string,
+    flag_billing_internacional string,
+    created_date timestamp,
+    datepartition date
+)
+''')
+
+spark.sql('GENERATE symlink_format_manifest FOR TABLE delta. `s3://datalake-dock/app/billing/bt_type_transaction_categorized_history/`')
+spark.sql("CREATE DATABASE IF NOT EXISTS app_billing_link LOCATION 's3://datalake-dock/app/billing/bt_type_transaction_categorized_history/link/'")
+spark.sql(f"""
+  CREATE EXTERNAL TABLE IF NOT EXISTS app_billing_link.bt_type_transaction_categorized_history (
+     id_emissor string,
+    nome_emissor string,
+    id_tipo_transacao string,
+    nome_transacao string,
+    flag_credito string,
+    categoria string,
+    flag_extrato string,
+    flag_estorno string,
+    flag_transitoria string,
+    conta_transitoria string,
+    flag_servico_dock string,
+    flag_billing_internacional string,
+    created_date timestamp,
+    datepartition date
+  )
+  ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+  STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat' 
+  OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat' 
+  LOCATION 's3://datalake-dock/app/billing/bt_type_transaction_categorized_history/_symlink_format_manifest/'""")
+  
+spark.sql('ALTER TABLE app_billing.bt_type_transaction_categorized_history ADD COLUMNS (flag_contas_ativas string)')
+
+spark.sql('UPDATE app_billing.bt_type_transaction_categorized_history SET flag_contas_ativas = "0" WHERE id_emissor = 126 and id_tipo_transacao = 24447')
