@@ -1,5 +1,5 @@
 spark.sql('''
-CREATE DATABASE IF NOT EXISTS app_billing  COMMENT 'Database reponsável por manter processos relacionados ao faturmanerto legado' LOCATION 's3://datalake-dock/app/billing/'
+CREATE DATABASE IF NOT EXISTS app_billing  COMMENT 'Database reponsável por manter processos relacionados ao faturmanerto legado' LOCATION 's3://[seu caminho do S3]'
 ''')
 
 spark.sql('''
@@ -22,8 +22,8 @@ CREATE TABLE app_billing.bt_type_transaction_categorized_history
 )
 ''')
 
-spark.sql('GENERATE symlink_format_manifest FOR TABLE delta. `s3://datalake-dock/app/billing/bt_type_transaction_categorized_history/`')
-spark.sql("CREATE DATABASE IF NOT EXISTS app_billing_link LOCATION 's3://datalake-dock/app/billing/bt_type_transaction_categorized_history/link/'")
+spark.sql('GENERATE symlink_format_manifest FOR TABLE delta. `s3://[seu caminho do S3]/bt_type_transaction_categorized_history/`')
+spark.sql("CREATE DATABASE IF NOT EXISTS app_billing_link LOCATION 's3://[seu caminho do S3]/bt_type_transaction_categorized_history/link/'")
 spark.sql(f"""
   CREATE EXTERNAL TABLE IF NOT EXISTS app_billing_link.bt_type_transaction_categorized_history (
      id_emissor string,
@@ -44,7 +44,7 @@ spark.sql(f"""
   ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
   STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat' 
   OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat' 
-  LOCATION 's3://datalake-dock/app/billing/bt_type_transaction_categorized_history/_symlink_format_manifest/'""")
+  LOCATION 's3://[seu caminho do S3]/bt_type_transaction_categorized_history/_symlink_format_manifest/'""")
   
 spark.sql('ALTER TABLE app_billing.bt_type_transaction_categorized_history ADD COLUMNS (flag_contas_ativas string)')
 
